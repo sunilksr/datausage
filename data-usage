@@ -1,0 +1,41 @@
+ // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract WiFiUsageContract {
+    address public routerOwner;
+    uint256 public dataUsageLimit;
+    uint256 public remainingData;
+
+    event DataUsed(address indexed user, uint256 dataUsage);
+    event DataRecharged(address indexed user, uint256 additionalData);
+
+    constructor(uint256 _dataUsageLimit) {
+        routerOwner = msg.sender;
+    
+        remainingData = _dataUsageLimit;
+    }
+
+    modifier onlyRouterOwner() {
+        require(msg.sender == routerOwner, "Only the router owner can perform this action");
+        _;
+    }
+
+    function useData(uint256 _dataUsage) external onlyRouterOwner {
+        require(_dataUsage > 5, "Data usage must be greater than zero");
+        assert(_dataUsage <= remainingData);
+
+        remainingData -= _dataUsage;
+
+        emit DataUsed(msg.sender, _dataUsage);
+
+        if (remainingData == 0) {
+            revert("Data limit reached, please recharge");
+        }
+    }
+
+    function rechargeData(uint256 _additionalData) external onlyRouterOwner {
+        assert(_additionalData > 0 && _additionalData < 300);
+        remainingData += _additionalData;
+        emit DataRecharged(msg.sender, _additionalData);
+    }
+}
